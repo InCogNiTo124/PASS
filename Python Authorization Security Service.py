@@ -7,8 +7,11 @@
 from tkinter import * #Tk, Button, Label, Frame, Listbox, constants, Entry, StringVar
 from tkinter.messagebox import showerror, askyesno
 from tkinter.simpledialog import Dialog
+from Crypto.Cipher import AES
+from Crypto.Hash import SHA512, MD5
 from sqlite3 import *
 import Constants as Con
+import base64
 
 #
 #   MAIN CLASS
@@ -275,6 +278,7 @@ class MainScreen(Frame):
         return
 
     def copyToClipboard(self, s):
+        self.PASS.root.clipboard_clear()
         self.PASS.root.clipboard_append(s)
         return
 
@@ -339,7 +343,7 @@ class AddDialog(Dialog):
         elif len(self.vPassword.get()) == 0:
             showerror(Con.GUI_ERROR_TITLE, Con.GUI_ERROR_DIALOG_PASSWORD_EMPTY)
             return False
-        elif not (len(self.vURL.get()) != 0 and "://" in self.vURL.get()):
+        elif not(len(self.vURL.get()) == 0 or "://" in self.vURL.get()):
             showerror(Con.GUI_ERROR_TITLE, Con.GUI_ERROR_DIALOG_URL_INCORRECT)
             return False
         else:
@@ -397,6 +401,9 @@ class EditDialog(Dialog):
             return False
         elif len(self.vPassword.get()) == 0:
             showerror(Con.GUI_ERROR_TITLE, Con.GUI_ERROR_DIALOG_PASSWORD_EMPTY)
+            return False
+        elif not(len(self.vURL.get()) == 0 or "://" in self.vURL.get()):
+            showerror(Con.GUI_ERROR_TITLE, Con.GUI_ERROR_DIALOG_URL_INCORRECT)
             return False
         else:
             return True
@@ -527,6 +534,28 @@ class Database():
         self.CONN.commit()
         return
 
+class Crypter():
+    def __init__(self):
+        return
+
+    def encrypt(self, text, key):
+        """
+        Text is string
+        Key is a hash, string
+        """
+        
+        text = text + Con.PAD_CHAR * (16 - len(text) % 16)
+        cipher = AES.new(key.encode("UTF-8"))
+        enc = cipher.encrypt(text.encode("UTF-8"))
+        return base64.b64encode(enc).decode("UTF-8")
+
+    def decrypt(self, encrypted, key):
+        cipher = AES.new(key.encode("UTF-8"))
+        deString = base64.b64decode(encrypted.encode("UTF-8"))
+        original = cipher.decrypt(deString)
+        return original.decode("UTF-8").strip(Con.PAD_CHAR)
+        
+
 #
 #   DATA CLASSES
 #
@@ -645,6 +674,20 @@ class DatabaseError(Exception):
 #
 
 if __name__ == '__main__':
+    c = Crypter()
+    txts = ["PORUKA", "sifrirano", "pozdrav ;)", "ide mi sifriranje", "lmaolol"]
+    keys = ["kljuc", "marijan smetko", "kad ti kazu da ne volim tad lazu te"]
+    for k in keys:
+        for t in txts:
+            keygen = MD5.new()
+            keygen.update(k.encode("UTF-8"))
+            
+            enc = c.encrypt(t, keygen.hexdigest())
+            print(enc)
+            dec = c.decrypt(enc, keygen.hexdigest())
+            print(dec)
+            print()
+            
     root = Tk()
     app = PASS(root)
     root.mainloop()
