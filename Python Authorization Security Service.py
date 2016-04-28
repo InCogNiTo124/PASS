@@ -71,7 +71,6 @@ class PASS():
         uName = self.view.vUsername.get()
         pWord = self.view.vPassword.get()
         u = User(None, fName, lName, uName, pWord)
-        print(u)
         try:
             u = self.DB.addUser(u)
             self.activeUser = u
@@ -416,11 +415,34 @@ class EditDialog(Dialog):
 #   DB CLASS
 #
 
+class Crypter():
+    def __init__(self):
+        return
+
+    def encrypt(self, text, key):
+        """
+        Text is string
+        Key is a hash, string
+        """
+        
+        text = text + Con.PAD_CHAR * (16 - len(text) % 16)
+        cipher = AES.new(key.encode("UTF-8"))
+        enc = cipher.encrypt(text.encode("UTF-8"))
+        return base64.b64encode(enc).decode("UTF-8")
+
+    def decrypt(self, encrypted, key):
+        cipher = AES.new(key.encode("UTF-8"))
+        deString = base64.b64decode(encrypted.encode("UTF-8"))
+        original = cipher.decrypt(deString)
+        return original.decode("UTF-8").strip(Con.PAD_CHAR)
+
 class Database():
     FILENAME = "PASS.db"
+    CIPHER = Crypter()
     def __init__(self):
         self.CONN = connect(self.FILENAME)
         self.CURSOR = self.CONN.cursor()
+        self.KEY = None
         self.prepareDB()
         return
 
@@ -429,23 +451,32 @@ class Database():
         self.CONN.close()
 
     def addUser(self, user):
+        keygen = MD5.new()
+        passgen = SHA512.new()
+        keygen.update(user.getPassword().encode("UTF-8"))
+        passgen.update(user.getPassword().encode("UTF-8"))
+        key = keygen.hexdigest()
+        pWord = passgen.hexdigest()
+        uName = self.CIPHER.encrypt(user.getUsername(), key)
         query = """
                 SELECT ID, FirstName, LastName, Username, Password
                 FROM Users
                 WHERE
                     Username = '{0}' AND
                     Password = '{1}';
-        """.format(user.getUsername(), user.getPassword())
+        """.format(uName, pWord)
         for row in self.CURSOR.execute(query):
             raise DatabaseError(Con.ERROR_DATABASE_USER_ALREADY_REGISTRATED)
             return
-
+        
+        fName = self.CIPHER.encrypt(user.getFirstName(), key)
+        lName = self.CIPHER.encrypt(user.getLastName(), key)
         query = """
                 INSERT INTO Users
                 (FirstName, LastName, Username, Password)
                 VALUES
                 ("{0}", "{1}", "{2}", "{3}");
-                """.format(user.getFirstName(), user.getLastName(), user.getUsername(), user.getPassword())
+                """.format(fName, lName, uName, pWord)
         self.CONN.execute(query)
         self.CONN.commit()
         return self.login(user)
@@ -476,30 +507,46 @@ class Database():
 
     def login(self, user):
         u = None
+        keygen = MD5.new()
+        passgen = SHA512.new()
+        keygen.update(user.getPassword().encode("UTF-8"))
+        passgen.update(user.getPassword().encode("UTF-8"))
+        key = keygen.hexdigest()
+        pWord = passgen.hexdigest()
+        uName = self.CIPHER.encrypt(user.getUsername(), key)
+        
         query = """
         SELECT ID, FirstName, LastName, Username, Password
         FROM Users
         WHERE Username = "{0}" AND
         Password = "{1}";
-        """.format(user.getUsername(), user.getPassword())
+        """.format(uName, pWord)
 
         for row in self.CURSOR.execute(query):  # An asumption is that there will be only one row
             u = User(row[0], row[1], row[2], row[3], row[4])
+
+        self.KEY = key
         return u
 
     def insertData(self, data):
+        key = self.KEY
+        title = self.CIPHER.encrypt(data.getTitle(), key)
+        URL = self.CIPHER.encrypt(data.getURL(), key)
+        uName = self.CIPHER.encrypt(data.getUsername(), key)
+        pWord = self.CIPHER.encrypt(data.getPassword(), key)
         query = """
                 INSERT INTO Data
                 (UserID, Title, URL, Username, Password)
                 VALUES
                 ({0}, "{1}", "{2}", "{3}", "{4}");
-                """.format(data.getUserID(), data.getTitle(), data.getURL(), data.getUsername(), data.getPassword())
+                """.format(data.getUserID(), title, URL, uName, pWord)
         self.CURSOR.execute(query)
         self.CONN.commit()
         return
 
     def getAllData(self, aUser):
         data = []
+        key = self.KEY
         query = """
                 SELECT ID, UserID, Title, URL, Username, Password
                 FROM Data
@@ -507,7 +554,11 @@ class Database():
                 ORDER BY Title ASC;
                 """.format(aUser.getID())
         for row in self.CURSOR.execute(query):
-            data.append(Data(row[0], row[1], row[2], row[3], row[4], row[5]))
+            title = self.CIPHER.decrypt(row[2], key)
+            URL = self.CIPHER.decrypt(row[3], key)
+            uName = self.CIPHER.decrypt(row[4], key)
+            pWord = self.CIPHER.decrypt(row[5], key)
+            data.append(Data(row[0], row[1], title, URL, uName, pWord))
 
         return data
 
@@ -533,28 +584,6 @@ class Database():
         self.CURSOR.execute(query)
         self.CONN.commit()
         return
-
-class Crypter():
-    def __init__(self):
-        return
-
-    def encrypt(self, text, key):
-        """
-        Text is string
-        Key is a hash, string
-        """
-        
-        text = text + Con.PAD_CHAR * (16 - len(text) % 16)
-        cipher = AES.new(key.encode("UTF-8"))
-        enc = cipher.encrypt(text.encode("UTF-8"))
-        return base64.b64encode(enc).decode("UTF-8")
-
-    def decrypt(self, encrypted, key):
-        cipher = AES.new(key.encode("UTF-8"))
-        deString = base64.b64decode(encrypted.encode("UTF-8"))
-        original = cipher.decrypt(deString)
-        return original.decode("UTF-8").strip(Con.PAD_CHAR)
-        
 
 #
 #   DATA CLASSES
@@ -674,19 +703,19 @@ class DatabaseError(Exception):
 #
 
 if __name__ == '__main__':
-    c = Crypter()
-    txts = ["PORUKA", "sifrirano", "pozdrav ;)", "ide mi sifriranje", "lmaolol"]
-    keys = ["kljuc", "marijan smetko", "kad ti kazu da ne volim tad lazu te"]
-    for k in keys:
-        for t in txts:
-            keygen = MD5.new()
-            keygen.update(k.encode("UTF-8"))
-            
-            enc = c.encrypt(t, keygen.hexdigest())
-            print(enc)
-            dec = c.decrypt(enc, keygen.hexdigest())
-            print(dec)
-            print()
+##    c = Crypter()
+##    txts = [""]
+##    keys = ["kljuc", "marijan smetko", "kad ti kazu da ne volim tad lazu te"]
+##    for k in keys:
+##        for t in txts:
+##            keygen = MD5.new()
+##            keygen.update(k.encode("UTF-8"))
+##            
+##            enc = c.encrypt(t, keygen.hexdigest())
+##            print(enc)
+##            dec = c.decrypt(enc, keygen.hexdigest())
+##            print(dec)
+##            print()
             
     root = Tk()
     app = PASS(root)
