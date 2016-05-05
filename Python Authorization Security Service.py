@@ -145,11 +145,12 @@ class WelcomeScreen(Frame):
         return
 
     def createGUI(self):
-        self.grid(rows = 2, columns = 1)
+        self.grid(rows = 3, columns = 1)
+        Label(self, text = "Hello!\nWelcome to PASS!", font = ("Arial", 12, "normal"), justify = LEFT).grid(row = 0, column = 0)
         self.registrationButton = Button(self, text = "Registration")
-        self.registrationButton.grid(row = 0, column = 0)
+        self.registrationButton.grid(row = 1, column = 0)
         self.loginButton = Button(self, text = "Login")
-        self.loginButton.grid(row = 1, column = 0)
+        self.loginButton.grid(row = 2, column = 0)
         return
 
 class LoginScreen(Frame):
@@ -210,15 +211,15 @@ class MainScreen(Frame):
         self.ACCOUNTS_LIST.grid(row = 0, column = 0, columnspan = 2, rowspan = 8)
 
         Label(self.MAIN_FRAME, text = "URL:").grid(row = 1, column = 3, sticky = W)
-        Entry(self.MAIN_FRAME, textvariable = self.vURL, width = 50).grid(row = 1, column = 4, columnspan = 2, sticky = W+E)
+        Entry(self.MAIN_FRAME, textvariable = self.vURL, width = 50, state = DISABLED, disabledforeground = "#000000", disabledbackground = "#ffffff").grid(row = 1, column = 4, columnspan = 2, sticky = W+E)
         Button(self.MAIN_FRAME, text = "Copy", command = lambda : self.copyToClipboard(self.vURL.get())).grid(row = 1, column = 5, sticky = W+E)
 
         Label(self.MAIN_FRAME, text = "Username:").grid(row = 2, column = 3, sticky = W)
-        Entry(self.MAIN_FRAME, textvariable = self.vUsername).grid(row = 2, column = 4, columnspan = 2, sticky = W+E)
+        Entry(self.MAIN_FRAME, textvariable = self.vUsername, state = DISABLED, disabledforeground = "#000000", disabledbackground = "#ffffff").grid(row = 2, column = 4, columnspan = 2, sticky = W+E)
         Button(self.MAIN_FRAME, text = "Copy", command = lambda : self.copyToClipboard(self.vUsername.get())).grid(row = 2, column = 5, sticky = W+E)
 
         Label(self.MAIN_FRAME, text = "Password:").grid(row = 3, column = 3, sticky = W)
-        e = Entry(self.MAIN_FRAME, textvariable = self.vPassword, show = Con.DOT)
+        e = Entry(self.MAIN_FRAME, textvariable = self.vPassword, show = Con.DOT, state = DISABLED, disabledforeground = "#000000", disabledbackground = "#ffffff")
         e.grid(row = 3, column = 4, columnspan = 2, sticky = W+E)
         Button(self.MAIN_FRAME, text = "Copy", command = lambda : self.copyToClipboard(self.vPassword.get())).grid(row = 3, column = 5, sticky = W+E)
         b = Button(self.MAIN_FRAME, text = "Show")
@@ -573,6 +574,11 @@ class Database():
         return
 
     def updateData(self, data):
+        key = self.KEY
+        title = self.CIPHER.encrypt(data.getTitle(), key)
+        URL = self.CIPHER.encrypt(data.getURL(), key)
+        uName = self.CIPHER.encrypt(data.getUsername(), key)
+        pWord = self.CIPHER.encrypt(data.getPassword(), key)
         query = """
                 UPDATE Data
                 SET Title = "{0}",
@@ -580,7 +586,7 @@ class Database():
                     Username = "{2}",
                     Password = "{3}"
                 WHERE ID = {4};
-                """.format(data.getTitle(), data.getURL(), data.getUsername(), data.getPassword(), data.getID())
+                """.format(title, URL, uName, pWord, data.getID())
         self.CURSOR.execute(query)
         self.CONN.commit()
         return
@@ -718,5 +724,5 @@ if __name__ == '__main__':
 ##            print()
             
     root = Tk()
-    app = PASS(root)
+    PASS(root)
     root.mainloop()
