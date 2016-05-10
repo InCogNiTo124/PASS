@@ -38,9 +38,9 @@ class PASS():
 
     def createGUI(self):
         self.root.update_idletasks()
-        x = (self.root.winfo_screenwidth() - self.root.winfo_reqwidth()) // 2
-        y = (self.root.winfo_screenheight() - self.root.winfo_reqheight()) // 2
-        self.root.geometry("+{0}+{1}".format(x, y))
+        #   x = (self.root.winfo_screenwidth() - self.root.winfo_reqwidth()) // 2
+        #   y = (self.root.winfo_screenheight() - self.root.winfo_reqheight()) // 2
+        #   self.root.geometry("+{0}+{1}".format(x, y))
 
         for w in self.root.winfo_children():
             w.destroy()
@@ -131,6 +131,9 @@ class PASS():
             b.config(text = "Show")
         return
 
+    def logOff(self):
+        return
+
 #
 #   GUI CLASSES
 #
@@ -145,12 +148,16 @@ class WelcomeScreen(Frame):
         return
 
     def createGUI(self):
-        self.grid(rows = 3, columns = 1)
+        self.grid(rows = 4, columns = 1)
         Label(self, text = "Hello!\nWelcome to PASS!", font = ("Arial", 12, "normal"), justify = LEFT).grid(row = 0, column = 0)
+        img = PhotoImage(file = "./res/images/logo.gif")
+        l = Label(self, image = img)
+        l.image = img
+        l.grid(row = 1, column = 0)
         self.registrationButton = Button(self, text = "Registration")
-        self.registrationButton.grid(row = 1, column = 0)
+        self.registrationButton.grid(row = 2, column = 0)
         self.loginButton = Button(self, text = "Login")
-        self.loginButton.grid(row = 2, column = 0)
+        self.loginButton.grid(row = 3, column = 0)
         return
 
 class LoginScreen(Frame):
@@ -194,17 +201,33 @@ class MainScreen(Frame):
 
         self.TOOLBAR = Frame(self)
         self.MAIN_FRAME = Frame(self)
-        self.TOOLBAR.grid(row = 0, column = 0, rows = 1, columns = 4)
+        self.TOOLBAR.grid(row = 0, column = 0, rows = 1, columns = 4, sticky = W)
         self.MAIN_FRAME.grid(row = 1, column = 0, rows = 8, columns = 8)
 
         for i in range(8):
             self.MAIN_FRAME.rowconfigure(i, weight = 1)
             self.MAIN_FRAME.columnconfigure(i, weight = 2)
 
-        Button(self.TOOLBAR, text = "Add", command = self.addData).grid(row = 0, column = 0, sticky = W)
-        Button(self.TOOLBAR, text = "Remove", command = self.remove).grid(row = 0, column = 1, sticky = W)
-        Button(self.TOOLBAR, text = "Edit", command = self.editData).grid(row = 0, column = 2, sticky = W)
-        Button(self.TOOLBAR, text = "Exit", command = self.PASS.exit).grid(row = 0, column = 3, sticky = W)
+        addImage = PhotoImage(file = "./res/images/add.gif")
+        addButton = Button(self.TOOLBAR, text = "Add", image = addImage, command = self.addData, compound = TOP)
+        addButton.image = addImage
+        addButton.grid(row = 0, column = 0, sticky = W)
+        removeImage = PhotoImage(file = "./res/images/remove.gif")
+        removeButton = Button(self.TOOLBAR, text = "Remove", command = self.remove, image = removeImage, compound = TOP)
+        removeButton.image = removeImage
+        removeButton.grid(row = 0, column = 1, sticky = W)
+        editImage = PhotoImage(file = "./res/images/edit.gif")
+        editButton = Button(self.TOOLBAR, text = "Edit", command = self.editData, compound = TOP, image = editImage)
+        editButton.image = editImage
+        editButton.grid(row = 0, column = 2, sticky = W)
+        logoffImage = PhotoImage(file = "./res/images/log_off.gif")
+        logoffButton = Button(self.TOOLBAR, text = "Log off", command = self.PASS.logOff, compound = TOP, image = logoffImage)
+        logoffButton.image = logoffImage
+        logoffButton.grid(row = 0, column = 3, sticky = W)
+        exitImage = PhotoImage(file = "./res/images/exit.gif")
+        exitButton = Button(self.TOOLBAR, text = "Exit", command = self.PASS.exit, compound = TOP, image = exitImage)
+        exitButton.image = exitImage
+        exitButton.grid(row = 0, column = 4, sticky = W)
 
         self.ACCOUNTS_LIST = Listbox(self.MAIN_FRAME, selectmode = SINGLE)
         self.ACCOUNTS_LIST.bind("<<ListboxSelect>>", self.showData)
@@ -460,12 +483,12 @@ class Database():
         pWord = passgen.hexdigest()
         uName = self.CIPHER.encrypt(user.getUsername(), key)
         query = """
-                SELECT ID, FirstName, LastName, Username, Password
-                FROM Users
+                SELECT {0}, {1}, {2}, {3}, {4}
+                FROM {5}
                 WHERE
-                    Username = '{0}' AND
-                    Password = '{1}';
-        """.format(uName, pWord)
+                    Username = '{6}' AND
+                    Password = '{7}';
+        """.format(Con.DB_USERS_ID, Con.DB_USERS_FIRSTNAME, Con.DB_USERS_LASTNAME, Con.DB_USERS_USERNAME, Con.DB_USERS_PASSWORD, Con.DB_USERS, uName, pWord)
         for row in self.CURSOR.execute(query):
             raise DatabaseError(Con.ERROR_DATABASE_USER_ALREADY_REGISTRATED)
             return
@@ -473,35 +496,35 @@ class Database():
         fName = self.CIPHER.encrypt(user.getFirstName(), key)
         lName = self.CIPHER.encrypt(user.getLastName(), key)
         query = """
-                INSERT INTO Users
-                (FirstName, LastName, Username, Password)
+                INSERT INTO {0}
+                ({1}, {2}, {3}, {4})
                 VALUES
-                ("{0}", "{1}", "{2}", "{3}");
-                """.format(fName, lName, uName, pWord)
+                ("{5}", "{6}", "{7}", "{8}");
+                """.format(Con.DB_USERS, Con.DB_USERS_FIRSTNAME, Con.DB_USERS_LASTNAME, Con.DB_USERS_USERNAME, Con.DB_USERS_PASSWORD, fName, lName, uName, pWord)
         self.CONN.execute(query)
         self.CONN.commit()
         return self.login(user)
 
     def prepareDB(self):
         query = """
-                CREATE TABLE IF NOT EXISTS Users
-                (ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                FirstName TEXT NOT NULL,
-                LastName TEXT NOT NULL,
-                Username TEXT NOT NULL,
-                Password TEXT NOT NULL);
-                """
+                CREATE TABLE IF NOT EXISTS {0}
+                ({1} INTEGER PRIMARY KEY AUTOINCREMENT,
+                {2} TEXT NOT NULL,
+                {3} TEXT NOT NULL,
+                {4} TEXT NOT NULL,
+                {5} TEXT NOT NULL);
+                """.format(Con.DB_USERS, Con.DB_USERS_ID, Con.DB_USERS_FIRSTNAME, Con.DB_USERS_LASTNAME, Con.DB_USERS_USERNAME, Con.DB_USERS_PASSWORD,)
         self.CONN.execute(query)
 
         query = """
-                CREATE TABLE IF NOT EXISTS Data
-                (ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                UserID INTEGER REFERENCES Users(ID),
-                Title TEXT NOT NULL,
-                URL TEXT,
-                Username TEXT NOT NULL,
-                Password TEXT NOT NULL);
-        """
+                CREATE TABLE IF NOT EXISTS {0}
+                ({1} INTEGER PRIMARY KEY AUTOINCREMENT,
+                {2} INTEGER REFERENCES {3}({4}),
+                {5} TEXT NOT NULL,
+                {6} TEXT,
+                {7} TEXT NOT NULL,
+                {8} TEXT NOT NULL);
+                """.format(Con.DB_DATA, Con.DB_DATA_ID, Con.DB_DATA_USERID, Con.DB_USERS, Con.DB_USERS_ID, Con.DB_DATA_TITLE, Con.DB_DATA_URL, Con.DB_DATA_USERNAME, Con.DB_DATA_PASSWORD)
         self.CONN.execute(query)
         self.CONN.commit()
         return
@@ -517,11 +540,12 @@ class Database():
         uName = self.CIPHER.encrypt(user.getUsername(), key)
         
         query = """
-        SELECT ID, FirstName, LastName, Username, Password
-        FROM Users
-        WHERE Username = "{0}" AND
-        Password = "{1}";
-        """.format(uName, pWord)
+                SELECT {0}, {1}, {2}, {3}, {4}
+                FROM {5}
+                WHERE
+                    Username = '{6}' AND
+                    Password = '{7}';
+        """.format(Con.DB_USERS_ID, Con.DB_USERS_FIRSTNAME, Con.DB_USERS_LASTNAME, Con.DB_USERS_USERNAME, Con.DB_USERS_PASSWORD, Con.DB_USERS, uName, pWord)
 
         for row in self.CURSOR.execute(query):  # An asumption is that there will be only one row
             u = User(row[0], row[1], row[2], row[3], row[4])
@@ -536,11 +560,11 @@ class Database():
         uName = self.CIPHER.encrypt(data.getUsername(), key)
         pWord = self.CIPHER.encrypt(data.getPassword(), key)
         query = """
-                INSERT INTO Data
-                (UserID, Title, URL, Username, Password)
+                INSERT INTO {0}
+                ({1}, {2}, {3}, {4}, {5})
                 VALUES
-                ({0}, "{1}", "{2}", "{3}", "{4}");
-                """.format(data.getUserID(), title, URL, uName, pWord)
+                ({6}, "{7}", "{8}", "{9}", "{10}");
+                """.format(Con.DB_DATA, Con.DB_DATA_USERID, Con.DB_DATA_TITLE, Con.DB_DATA_URL, Con.DB_DATA_USERNAME, Con.DB_DATA_PASSWORD, data.getUserID(), title, URL, uName, pWord)
         self.CURSOR.execute(query)
         self.CONN.commit()
         return
@@ -549,11 +573,12 @@ class Database():
         data = []
         key = self.KEY
         query = """
-                SELECT ID, UserID, Title, URL, Username, Password
-                FROM Data
-                WHERE UserID = {0}
-                ORDER BY Title ASC;
-                """.format(aUser.getID())
+                SELECT {0}, {1}, {2}, {3}, {4}, {5}
+                FROM {6}
+                WHERE {7} = {8}
+                ORDER BY {9} ASC;
+                """.format(Con.DB_DATA_ID, Con.DB_DATA_USERID, Con.DB_DATA_TITLE, Con.DB_DATA_URL, Con.DB_DATA_USERNAME, Con.DB_DATA_PASSWORD, Con.DB_DATA, Con.DB_DATA_USERID, aUser.getID(), Con.DB_DATA_TITLE)
+        
         for row in self.CURSOR.execute(query):
             title = self.CIPHER.decrypt(row[2], key)
             URL = self.CIPHER.decrypt(row[3], key)
@@ -566,9 +591,9 @@ class Database():
     def removeData(self, ID):
         query = """
                 DELETE
-                FROM Data
-                WHERE ID = {0};
-                """.format(ID)
+                FROM {0}
+                WHERE {1} = {2};
+                """.format(Con.DB_DATA, Con.DB_DATA_ID, ID)
         self.CURSOR.execute(query)
         self.CONN.commit()
         return
@@ -580,13 +605,13 @@ class Database():
         uName = self.CIPHER.encrypt(data.getUsername(), key)
         pWord = self.CIPHER.encrypt(data.getPassword(), key)
         query = """
-                UPDATE Data
-                SET Title = "{0}",
-                    URL = "{1}",
-                    Username = "{2}",
-                    Password = "{3}"
-                WHERE ID = {4};
-                """.format(title, URL, uName, pWord, data.getID())
+                UPDATE {0}
+                SET {1} = "{2}",
+                    {3} = "{4}",
+                    {5} = "{6}",
+                    {7} = "{8}"
+                WHERE ID = {9};
+                """.format(Con.DB_DATA, Con.DB_DATA_TITLE, title, Con.DB_DATA_URL, URL, Con.DB_DATA_USERNAME, uName, Con.DB_DATA_PASSWORD, pWord, data.getID())
         self.CURSOR.execute(query)
         self.CONN.commit()
         return
