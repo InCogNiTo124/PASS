@@ -23,6 +23,7 @@ class PASS():
         self.STATE = Con.SCREEN_WELCOME
         root.title("Python Authorization Security Service")
         root.protocol("WM_DELETE_WINDOW", self.exit)
+        root.iconbitmap(r'./res/images/icon.ico')
         self.view = None
         self.DB = Database()
         self.activeUser = None
@@ -132,6 +133,9 @@ class PASS():
         return
 
     def logOff(self):
+        if askyesno(Con.GUI_LOGOFF_TITLE, Con.GUI_LOGOFF_MESSAGE):
+            self.activeUser = None
+            self.changeState(Con.SCREEN_LOGIN)
         return
 
 #
@@ -149,15 +153,15 @@ class WelcomeScreen(Frame):
 
     def createGUI(self):
         self.grid(rows = 4, columns = 1)
-        Label(self, text = "Hello!\nWelcome to PASS!", font = ("Arial", 12, "normal"), justify = LEFT).grid(row = 0, column = 0)
+        Label(self, text = "Hello!\nWelcome to PASS!", font = ("Arial", 12, "bold"), justify = LEFT).grid(row = 0, column = 0)
         img = PhotoImage(file = "./res/images/logo.gif")
         l = Label(self, image = img)
         l.image = img
         l.grid(row = 1, column = 0)
-        self.registrationButton = Button(self, text = "Registration")
-        self.registrationButton.grid(row = 2, column = 0)
-        self.loginButton = Button(self, text = "Login")
-        self.loginButton.grid(row = 3, column = 0)
+        self.registrationButton = Button(self, text = "Registration", width = 10)
+        self.registrationButton.grid(row = 2, column = 0, pady = 5)
+        self.loginButton = Button(self, text = "Login", width = 10)
+        self.loginButton.grid(row = 3, column = 0, pady = 5)
         return
 
 class LoginScreen(Frame):
@@ -174,13 +178,13 @@ class LoginScreen(Frame):
     def createGUI(self):
         self.grid(rows = 5, columns = 2)
         Label(self, text = "Username:").grid(row = 0, column = 0, columnspan = 2)
-        Entry(self, textvariable = self.vUsername).grid(row = 1, column = 0, pady = 10, columnspan = 2)
+        Entry(self, textvariable = self.vUsername).grid(row = 1, column = 0, pady = 10, columnspan = 2, padx = 5)
         Label(self, text = "Password:").grid(row = 2, column = 0, columnspan = 2)
-        Entry(self, textvariable = self.vPassword, show = Con.DOT).grid(row = 3, column = 0, pady = 10, columnspan = 2)
-        self.loginButton = Button(self, text = "Login")
-        self.loginButton.grid(row = 4, column = 1)
-        self.cancelButton = Button(self, text = "Cancel")
-        self.cancelButton.grid(row = 4, column = 0)
+        Entry(self, textvariable = self.vPassword, show = Con.DOT).grid(row = 3, column = 0, pady = 10, columnspan = 2, padx = 5)
+        self.loginButton = Button(self, text = "Login", width = 5)
+        self.loginButton.grid(row = 4, column = 1, pady = 5)
+        self.cancelButton = Button(self, text = "Cancel", width = 5)
+        self.cancelButton.grid(row = 4, column = 0, pady = 5)
         return
 
 class MainScreen(Frame):
@@ -191,6 +195,8 @@ class MainScreen(Frame):
         self.vUsername = StringVar()
         self.vPassword = StringVar()
         self.ACCOUNTS_LIST = None
+        self.TOOLBAR = Frame(self)
+        self.MAIN_FRAME = Frame(self)
 
         self.createGUI()
         self.PASS.populateListbox(self.ACCOUNTS_LIST)
@@ -199,10 +205,8 @@ class MainScreen(Frame):
     def createGUI(self):
         self.grid(row = 2, columns = 1)
 
-        self.TOOLBAR = Frame(self)
-        self.MAIN_FRAME = Frame(self)
-        self.TOOLBAR.grid(row = 0, column = 0, rows = 1, columns = 4, sticky = W)
-        self.MAIN_FRAME.grid(row = 1, column = 0, rows = 8, columns = 8)
+        self.TOOLBAR.grid(row = 0, column = 0, rows = 1, columns = 4, sticky = W, pady = (5, 10), padx = 5)
+        self.MAIN_FRAME.grid(row = 1, column = 0, rows = 8, columns = 8, pady = 5, padx = 5)
 
         for i in range(8):
             self.MAIN_FRAME.rowconfigure(i, weight = 1)
@@ -211,43 +215,43 @@ class MainScreen(Frame):
         addImage = PhotoImage(file = "./res/images/add.gif")
         addButton = Button(self.TOOLBAR, text = "Add", image = addImage, command = self.addData, compound = TOP)
         addButton.image = addImage
-        addButton.grid(row = 0, column = 0, sticky = W)
+        addButton.grid(row = 0, column = 0, sticky = W, padx = (0, 5))
         removeImage = PhotoImage(file = "./res/images/remove.gif")
         removeButton = Button(self.TOOLBAR, text = "Remove", command = self.remove, image = removeImage, compound = TOP)
         removeButton.image = removeImage
-        removeButton.grid(row = 0, column = 1, sticky = W)
+        removeButton.grid(row = 0, column = 1, sticky = W, padx = (0, 5))
         editImage = PhotoImage(file = "./res/images/edit.gif")
         editButton = Button(self.TOOLBAR, text = "Edit", command = self.editData, compound = TOP, image = editImage)
         editButton.image = editImage
-        editButton.grid(row = 0, column = 2, sticky = W)
+        editButton.grid(row = 0, column = 2, sticky = W, padx = (0, 5))
         logoffImage = PhotoImage(file = "./res/images/log_off.gif")
         logoffButton = Button(self.TOOLBAR, text = "Log off", command = self.PASS.logOff, compound = TOP, image = logoffImage)
         logoffButton.image = logoffImage
-        logoffButton.grid(row = 0, column = 3, sticky = W)
+        logoffButton.grid(row = 0, column = 3, sticky = W, padx = (0, 5))
         exitImage = PhotoImage(file = "./res/images/exit.gif")
         exitButton = Button(self.TOOLBAR, text = "Exit", command = self.PASS.exit, compound = TOP, image = exitImage)
         exitButton.image = exitImage
-        exitButton.grid(row = 0, column = 4, sticky = W)
+        exitButton.grid(row = 0, column = 4, sticky = W, padx = (20, 0))
 
         self.ACCOUNTS_LIST = Listbox(self.MAIN_FRAME, selectmode = SINGLE)
         self.ACCOUNTS_LIST.bind("<<ListboxSelect>>", self.showData)
-        self.ACCOUNTS_LIST.grid(row = 0, column = 0, columnspan = 2, rowspan = 8)
+        self.ACCOUNTS_LIST.grid(row = 0, column = 0, columnspan = 2, rowspan = 8, padx = (0, 20))
 
         Label(self.MAIN_FRAME, text = "URL:").grid(row = 1, column = 3, sticky = W)
-        Entry(self.MAIN_FRAME, textvariable = self.vURL, width = 50, state = DISABLED, disabledforeground = "#000000", disabledbackground = "#ffffff").grid(row = 1, column = 4, columnspan = 2, sticky = W+E)
-        Button(self.MAIN_FRAME, text = "Copy", command = lambda : self.copyToClipboard(self.vURL.get())).grid(row = 1, column = 5, sticky = W+E)
+        Entry(self.MAIN_FRAME, textvariable = self.vURL, width = 30, state = DISABLED, disabledforeground = "#000000", disabledbackground = "#ffffff").grid(row = 1, column = 4, sticky = W+E, padx = (10, 10))
+        Button(self.MAIN_FRAME, text = "Copy", width = 10, command = lambda : self.copyToClipboard(self.vURL.get())).grid(row = 1, column = 5, sticky = W+E)
 
         Label(self.MAIN_FRAME, text = "Username:").grid(row = 2, column = 3, sticky = W)
-        Entry(self.MAIN_FRAME, textvariable = self.vUsername, state = DISABLED, disabledforeground = "#000000", disabledbackground = "#ffffff").grid(row = 2, column = 4, columnspan = 2, sticky = W+E)
-        Button(self.MAIN_FRAME, text = "Copy", command = lambda : self.copyToClipboard(self.vUsername.get())).grid(row = 2, column = 5, sticky = W+E)
+        Entry(self.MAIN_FRAME, textvariable = self.vUsername, state = DISABLED, disabledforeground = "#000000", disabledbackground = "#ffffff").grid(row = 2, column = 4, sticky = W+E, padx = (10, 10))
+        Button(self.MAIN_FRAME, text = "Copy", width = 10, command = lambda : self.copyToClipboard(self.vUsername.get())).grid(row = 2, column = 5, sticky = W+E)
 
         Label(self.MAIN_FRAME, text = "Password:").grid(row = 3, column = 3, sticky = W)
         e = Entry(self.MAIN_FRAME, textvariable = self.vPassword, show = Con.DOT, state = DISABLED, disabledforeground = "#000000", disabledbackground = "#ffffff")
-        e.grid(row = 3, column = 4, columnspan = 2, sticky = W+E)
-        Button(self.MAIN_FRAME, text = "Copy", command = lambda : self.copyToClipboard(self.vPassword.get())).grid(row = 3, column = 5, sticky = W+E)
-        b = Button(self.MAIN_FRAME, text = "Show")
+        e.grid(row = 3, column = 4, sticky = W+E, padx = (10, 10))
+        Button(self.MAIN_FRAME, text = "Copy", width = 10, command = lambda : self.copyToClipboard(self.vPassword.get())).grid(row = 3, column = 5, sticky = W+E)
+        b = Button(self.MAIN_FRAME, text = "Show", width = 7)
         b.config(command = lambda : self.PASS.togglePassword(e, b))
-        b.grid(row = 3, column = 6, sticky = W+E)
+        b.grid(row = 3, column = 6, sticky = W+E, padx = (5, 0))
         return
 
     def addData(self):
@@ -319,19 +323,19 @@ class RegistrationScreen(Frame):
         return
 
     def createGUI(self):
-        self.grid(rows = 5, columns = 2)
-        Label(self, text = "First Name").grid(row = 0, column = 0)
-        Label(self, text = "Last Name").grid(row = 0, column = 1)
-        Entry(self, textvariable = self.vFirstName).grid(row = 1, column = 0)
-        Entry(self, textvariable = self.vLastName).grid(row = 1, column = 1)
-        Label(self, text = "Username").grid(row = 2, column = 0)
-        Label(self, text = "Password").grid(row = 2, column = 1)
-        Entry(self, textvariable = self.vUsername).grid(row = 3, column = 0)
-        Entry(self, textvariable = self.vPassword, show = Con.DOT).grid(row = 3, column = 1)
-        self.registerButton = Button(self, text = "Register")
-        self.registerButton.grid(row = 4, column = 1)
-        self.cancelButton = Button(self, text = "Cancel")
-        self.cancelButton.grid(row = 4, column = 0)
+        self.grid(rows = 9, columns = 2)
+        Label(self, text = "First Name").grid(row = 0, column = 0, columnspan = 2, sticky = W + E)
+        Label(self, text = "Last Name").grid(row = 2, column = 0, columnspan = 2)
+        Entry(self, textvariable = self.vFirstName).grid(row = 1, column = 0, columnspan = 2, pady = (0, 15))
+        Entry(self, textvariable = self.vLastName).grid(row = 3, column = 0, columnspan = 2, pady = (0, 15))
+        Label(self, text = "Username").grid(row = 4, column = 0, columnspan = 2)
+        Label(self, text = "Password").grid(row = 6, column = 0, columnspan = 2)
+        Entry(self, textvariable = self.vUsername).grid(row = 5, column = 0, columnspan = 2, pady = (0, 15))
+        Entry(self, textvariable = self.vPassword, show = Con.DOT).grid(row = 7, column = 0, columnspan = 2, pady = (0, 25))
+        self.registerButton = Button(self, text = "Register", width = 10)
+        self.registerButton.grid(row = 8, column = 1, padx = 2)
+        self.cancelButton = Button(self, text = "Cancel", width = 10)
+        self.cancelButton.grid(row = 8, column = 0, padx = 2)
         return
 
 class AddDialog(Dialog):
@@ -342,16 +346,16 @@ class AddDialog(Dialog):
         self.vUsername = StringVar()
         self.vPassword = StringVar()
         
-        Label(parent, text = "Title:").grid(row = 0, column = 0, sticky = W)
-        Label(parent, text = "URL:").grid(row = 0, column = 1)
-        Entry(parent, textvariable = self.vTitle).grid(row = 1, column = 0)
-        Entry(parent, textvariable = self.vURL).grid(row = 1, column = 1)
+        Label(parent, text = "Title:").grid(row = 0, column = 0, sticky = W+E, padx = 5)
+        Label(parent, text = "URL:").grid(row = 0, column = 1, sticky = W+E, padx = 5)
+        Entry(parent, textvariable = self.vTitle).grid(row = 1, column = 0, sticky = W+E, padx = 5, pady = (0, 15))
+        Entry(parent, textvariable = self.vURL).grid(row = 1, column = 1, sticky = W+E, padx = 5, pady = (0, 15))
         Label(parent, text = "Username:").grid(row = 2, column = 0)
         Label(parent, text = "Password:").grid(row = 2, column = 1)
         Entry(parent, textvariable = self.vUsername).grid(row = 3, column = 0)
         e = Entry(parent, show = Con.DOT, textvariable = self.vPassword)
         e.grid(row = 3, column = 1)
-        b = Button(parent, text = "Show")
+        b = Button(parent, text = "Show", width = 7)
         b.grid(row = 3, column = 2)
         b.config(command = lambda : self.togglePassword(e, b))
         return
@@ -405,14 +409,27 @@ class EditDialog(Dialog):
         self.vPassword = StringVar()
         self.vPassword.set(self.data.getPassword())
 
-        Label(parent, text = "Title:").grid(row = 0, column = 0, sticky = W)
-        Label(parent, text = "URL:").grid(row = 0, column = 1)
-        Entry(parent, textvariable = self.vTitle).grid(row = 1, column = 0)
-        Entry(parent, textvariable = self.vURL).grid(row = 1, column = 1)
+        Label(parent, text = "Title:").grid(row = 0, column = 0, sticky = W+E, padx = 5)
+        Label(parent, text = "URL:").grid(row = 0, column = 1, sticky = W+E, padx = 5)
+        Entry(parent, textvariable = self.vTitle).grid(row = 1, column = 0, sticky = W+E, padx = 5, pady = (0, 15))
+        Entry(parent, textvariable = self.vURL).grid(row = 1, column = 1, sticky = W+E, padx = 5, pady = (0, 15))
         Label(parent, text = "Username:").grid(row = 2, column = 0)
         Label(parent, text = "Password:").grid(row = 2, column = 1)
         Entry(parent, textvariable = self.vUsername).grid(row = 3, column = 0)
-        Entry(parent, show = Con.DOT, textvariable = self.vPassword).grid(row = 3, column = 1)
+        e = Entry(parent, show = Con.DOT, textvariable = self.vPassword)
+        e.grid(row = 3, column = 1)
+        b = Button(parent, text = "Show", width = 7)
+        b.grid(row = 3, column = 2)
+        b.config(command = lambda : self.togglePassword(e, b))
+        return
+
+    def togglePassword(self, e, b):
+        if e["show"] == Con.DOT:
+            e.config(show = "")
+            b.config(text = "Hide")
+        else:
+            e.config(show = Con.DOT)
+            b.config(text = "Show")
         return
 
     def validate(self):

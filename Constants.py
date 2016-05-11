@@ -28,6 +28,8 @@ GUI_ERROR_DIALOG_USERNAME_EMPTY = "Username must not be empty."
 GUI_ERROR_DIALOG_PASSWORD_EMPTY = "Password must not be empty."
 GUI_ERROR_DIALOG_URL_INCORRECT = "URL is not correct."
 GUI_NO_ACCOUNTS = "(Empty)"
+GUI_LOGOFF_TITLE = "Log off"
+GUI_LOGOFF_MESSAGE = "Are you sure you want to log off?"
 
 DB_USERS = "Users"
 DB_USERS_ID = "ID"
